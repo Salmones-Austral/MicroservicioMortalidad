@@ -7,10 +7,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    @Bean(name = "mortalidadWebClient")
-    public WebClient mortalidadWebClient(WebClient.Builder builder) {
-        return builder
-                .baseUrl("http://localhost:8081/api/mortalidad") // URL del microservicio o API externa
-                .build();
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder(); // Retorna el constructor limpio
     }
 }
