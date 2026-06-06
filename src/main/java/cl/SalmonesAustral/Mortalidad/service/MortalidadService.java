@@ -5,18 +5,20 @@ import org.springframework.stereotype.Service;
 
 import cl.SalmonesAustral.Mortalidad.modelo.Mortalidad;
 import cl.SalmonesAustral.Mortalidad.repository.MortalidadRepository;
-import cl.SalmonesAustral.Mortalidad.client.JaulaClient; // Importamos el nuevo Client
+import cl.SalmonesAustral.Mortalidad.client.JaulaClient;
+import cl.SalmonesAustral.Mortalidad.client.AlertaClient; // IMPORTANTE
 
 @Service
 public class MortalidadService {
 
     private final MortalidadRepository repository;
-    private final JaulaClient jaulaClient; // Usamos el Client en lugar del WebClient crudo
+    private final JaulaClient jaulaClient;
+    private final AlertaClient alertaClient; // Agregamos el cliente
 
-    // Inyectamos el Repository y el Client
-    public MortalidadService(MortalidadRepository repository, JaulaClient jaulaClient) {
+    public MortalidadService(MortalidadRepository repository, JaulaClient jaulaClient, AlertaClient alertaClient) {
         this.repository = repository;
         this.jaulaClient = jaulaClient;
+        this.alertaClient = alertaClient; // Inyectado
     }
 
     public List<Mortalidad> getAll() {
@@ -24,16 +26,14 @@ public class MortalidadService {
     }
 
     public Mortalidad save(Mortalidad m) {
-        // 1. Validar usando nuestro Client ordenado
         if (!jaulaClient.existeJaula(m.getJaulaId())) {
             throw new IllegalArgumentException("La Jaula con ID " + m.getJaulaId() + " no existe. No se puede registrar mortalidad.");
         }
 
-        // 2. Guardar el registro
         Mortalidad guardada = repository.save(m);
 
-        // 3. Regla de negocio (Historia de Usuario 1)
-        evaluarAlertaMortalidad(m.getJaulaId());
+        // Pasamos el ID de la mortalidad recién guardada a la evaluación
+        evaluarAlertaMortalidad(guardada.getId(), m.getJaulaId());
 
         return guardada;
     }
@@ -49,12 +49,14 @@ public class MortalidadService {
         return suma / lista.size();
     }
 
-    private void evaluarAlertaMortalidad(int jaulaId) {
+    private void evaluarAlertaMortalidad(Integer mortalidadId, int jaulaId) {
         double promedioActual = calcularPromedio(jaulaId);
         
-        if (promedioActual > 0.15) {
-            System.out.println("⚠️ ALERTA CRÍTICA ⚠️");
-            System.out.println("La Jaula " + jaulaId + " ha superado el 0.15% de mortalidad (Promedio actual: " + promedioActual + "%).");
+        // ¡Cambiamos la lógica! Según tu AlertaService, el nivel empieza a los 5% (0.05).
+        // Ajustemos aquí para enviar si supera 0.05
+        if (promedioActual > 0.05) { 
+            // ¡Llamamos al microservicio de Alertas!
+            alertaClient.notificarAlerta(mortalidadId, jaulaId, promedioActual);
         }
     }
 }
