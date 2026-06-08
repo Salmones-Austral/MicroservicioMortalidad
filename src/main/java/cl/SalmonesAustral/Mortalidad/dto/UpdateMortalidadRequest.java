@@ -1,6 +1,6 @@
 package cl.SalmonesAustral.Mortalidad.dto;
 
-import jakarta.validation.constraints.NotBlank;
+
 import jakarta.validation.constraints.PositiveOrZero;
 
 /**
