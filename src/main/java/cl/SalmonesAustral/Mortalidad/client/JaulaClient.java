@@ -12,7 +12,7 @@ public class JaulaClient {
 
     // Le decimos que lea la variable JAULAS_SERVICE_URL, o que use localhost por defecto si estás en tu PC
     public JaulaClient(WebClient.Builder builder, 
-                       @Value("${jaulas.service.url:http://localhost:8080/api/v1/jaulas}") String jaulasUrl) {
+                       @Value("${jaulas.service.url:http://localhost:8081/api/v1/jaulas}") String jaulasUrl) {
         this.webClient = builder.baseUrl(jaulasUrl).build();
     }
 
