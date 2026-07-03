@@ -6,19 +6,19 @@ import org.springframework.stereotype.Service;
 import cl.SalmonesAustral.Mortalidad.modelo.Mortalidad;
 import cl.SalmonesAustral.Mortalidad.repository.MortalidadRepository;
 import cl.SalmonesAustral.Mortalidad.client.JaulaClient;
-import cl.SalmonesAustral.Mortalidad.client.AlertaClient; // IMPORTANTE
+import cl.SalmonesAustral.Mortalidad.client.AlertaClient;
 
 @Service
 public class MortalidadService {
 
     private final MortalidadRepository repository;
     private final JaulaClient jaulaClient;
-    private final AlertaClient alertaClient; // Agregamos el cliente
+    private final AlertaClient alertaClient;
 
     public MortalidadService(MortalidadRepository repository, JaulaClient jaulaClient, AlertaClient alertaClient) {
         this.repository = repository;
         this.jaulaClient = jaulaClient;
-        this.alertaClient = alertaClient; // Inyectado
+        this.alertaClient = alertaClient;
     }
 
     public List<Mortalidad> getAll() {
@@ -32,8 +32,8 @@ public class MortalidadService {
 
         Mortalidad guardada = repository.save(m);
 
-        // Pasamos el ID de la mortalidad recién guardada a la evaluación
-        evaluarAlertaMortalidad(guardada.getId(), m.getJaulaId());
+        // OPCIÓN A: Evaluamos usando directamente el porcentaje que se acaba de registrar
+        evaluarAlertaMortalidad(guardada.getId(), guardada.getJaulaId(), guardada.getPorcentaje());
 
         return guardada;
     }
@@ -49,13 +49,13 @@ public class MortalidadService {
         return suma / lista.size();
     }
 
-    private void evaluarAlertaMortalidad(Integer mortalidadId, int jaulaId) {
-        double promedioActual = calcularPromedio(jaulaId);
+    // Modificado para recibir el porcentaje actual ingresado en el POST
+    private void evaluarAlertaMortalidad(Integer mortalidadId, int jaulaId, double porcentajeActual) {
         
-        // CORREGIDO: Ahora gatilla si el promedio es igual o superior a 0.15%
-        if (promedioActual >= 0.15) { 
-            System.out.println("⚠️ Mortalidad alta detectada (" + promedioActual + "%). Llamando al microservicio de Alertas...");
-            alertaClient.notificarAlerta(mortalidadId, jaulaId, promedioActual);
+        // Compara directamente el valor del input actual (ej: 0.18 o 0.25)
+        if (porcentajeActual >= 0.15) { 
+            System.out.println("⚠️ Mortalidad alta detectada (" + porcentajeActual + "%). Llamando al microservicio de Alertas...");
+            alertaClient.notificarAlerta(mortalidadId, jaulaId, porcentajeActual);
         }
     }
 }
