@@ -52,10 +52,9 @@ public class MortalidadService {
     private void evaluarAlertaMortalidad(Integer mortalidadId, int jaulaId) {
         double promedioActual = calcularPromedio(jaulaId);
         
-        // ¡Cambiamos la lógica! Según tu AlertaService, el nivel empieza a los 5% (0.05).
-        // Ajustemos aquí para enviar si supera 0.05
-        if (promedioActual > 0.05) { 
-            // ¡Llamamos al microservicio de Alertas!
+        // CORREGIDO: Ahora gatilla si el promedio es igual o superior a 0.15%
+        if (promedioActual >= 0.15) { 
+            System.out.println("⚠️ Mortalidad alta detectada (" + promedioActual + "%). Llamando al microservicio de Alertas...");
             alertaClient.notificarAlerta(mortalidadId, jaulaId, promedioActual);
         }
     }

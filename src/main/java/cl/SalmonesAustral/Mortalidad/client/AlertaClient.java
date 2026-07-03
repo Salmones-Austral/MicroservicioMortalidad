@@ -1,5 +1,6 @@
 package cl.SalmonesAustral.Mortalidad.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -8,30 +9,32 @@ public class AlertaClient {
 
     private final WebClient webClient;
 
-    public AlertaClient(WebClient.Builder builder) {
-        // Apuntamos al microservicio de Alertas (Puerto 8083)
-        this.webClient = builder.baseUrl("http://localhost:8083/api/v1/alertas").build();
+    public AlertaClient(WebClient.Builder builder, 
+                        @Value("${alertas.service.url:http://localhost:8083/api/v1/alertas}") String alertasUrl) {
+        this.webClient = builder.baseUrl(alertasUrl).build();
     }
 
-    public void notificarAlerta(Integer mortalidadId, int jaulaId, double promedio) {
+    public void notificarAlerta(Integer intMortalidadId, int jaulaId, double porcentaje) {
         try {
-            System.out.println("📡 Comunicando con microservicio de Alertas...");
-            
-            // Usamos post() y mandamos los parámetros por query
+            // Convertimos el Integer a Long porque Alertas espera un Long en el RequestParam
+            Long mortalidadId = intMortalidadId.longValue();
+
+            System.out.println("Enviando petición a Alertas para Jaula " + jaulaId + " con porcentaje " + porcentaje);
+
             webClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/generar")
                             .queryParam("mortalidadId", mortalidadId)
                             .queryParam("jaulaId", jaulaId)
-                            .queryParam("porcentaje", promedio)
+                            .queryParam("porcentaje", porcentaje)
                             .build())
                     .retrieve()
-                    .bodyToMono(String.class)
-                    .block(); // Esperamos que se envíe
-                    
-            System.out.println("✅ Notificación de alerta enviada exitosamente.");
+                    .bodyToMono(Void.class)
+                    .block(); // Esperamos que Alertas confirme la recepción
+
+            System.out.println("✅ ¡Alerta generada y procesada correctamente!");
         } catch (Exception e) {
-            System.err.println("🔴 ERROR al comunicar con MS Alertas: " + e.getMessage());
+            System.err.println("🔴 Falló la comunicación con el microservicio de Alertas: " + e.getMessage());
         }
     }
 }
